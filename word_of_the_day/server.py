@@ -1,7 +1,11 @@
 import datetime
 import os
 import sqlite3
+import schedule
 from flask import Flask, jsonify, g
+from threading import Thread
+from time import sleep
+
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -83,3 +87,23 @@ def word_from_the_day(date):
 def word_of_the_day():
     now = datetime.datetime.now().strftime('%Y-%m-%d')
     return word_from_the_day(now)
+
+def set_word_of_the_day():
+    def job():
+        db = get_db()
+        cur = db.execute("select * from words where date is null order by random() limit 1")
+        word = cur.fetchone()
+        now = datetime.datetime.now().strftime('%Y-%m-%d')
+        db.execute("update words set date='" + now + "' where id=" + word['id'])
+        db.commit()
+        print('Update database!')
+
+    schedule.every().day.at('14:39').do(job)
+
+    while True:
+        schedule.run_pending()
+        sleep(1)
+
+thread = Thread(target=set_word_of_the_day)
+thread.start()
+thread.join()
