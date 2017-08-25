@@ -1,0 +1,5 @@
+venv
+words_stripped.txt
+word_of_the_day/wod.db
+word_of_the_day/__pycache__
+word_of_the_day.egg-info
