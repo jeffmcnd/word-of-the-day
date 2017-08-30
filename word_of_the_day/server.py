@@ -110,6 +110,9 @@ def set_word_of_the_day():
         'success': true,
     })
 
+# TODO: create endpoint for date ranges
+# TODO: create endpoint for recent words (last seven days)
+
 if __name__ == "__main__":
     app.run()
 
