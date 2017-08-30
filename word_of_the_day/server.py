@@ -62,47 +62,59 @@ def validate_date(date_text):
     except ValueError:
         return False 
 
-@app.route('/<date>', methods=['GET'])
-def word_from_the_day(date):
+def word_for_date(date):
     if not validate_date(date):
-        return jsonify({
+        return {
             'error': 'Invalid date format. Must be YYYY-MM-DD.'
-        })
+        }
 
     db = get_db()
     cur = db.execute("select * from words where date is '" + date + "' order by random() limit 1")
     word = cur.fetchone()
 
     if not word:
-        return jsonify({
+        return {
             'error': 'No word found.'
-        })
+        }
 
-    return jsonify({
+    return {
         'text': word['text'],
         'date': word['date'],
-    })
+    }
 
 @app.route('/', methods=['GET'])
 def word_of_the_day():
     now = datetime.datetime.now().strftime('%Y-%m-%d')
-    return word_from_the_day(now)
+    return jsonify(word_for_day(now))
 
+@app.route('/<date>', methods=['GET'])
+def word_from_date(date):
+    return jsonify(word_for_date(date))
+
+@app.route('/update', methods=['GET'])
 def set_word_of_the_day():
-    print('Updating Word of the Day!')
+    response = word_of_the_day()
+
+    if not response.get('error'):
+        return jsonify({
+            'success': 'Word already up to date!'
+        })
+
     db = get_db()
     cur = db.execute("select * from words where date is null order by random() limit 1")
     word = cur.fetchone()
     now = datetime.datetime.now().strftime('%Y-%m-%d')
-    db.execute("update words set date='" + now + "' where id=" + word['id'])
+    db.execute("update words set date='" + now + "' where id=" + str(word['id']))
     db.commit()
-
+    return jsonify({
+        'success': true,
+    })
 
 if __name__ == "__main__":
     app.run()
 
-    schedule.every().day.at('14:51').do(set_word_of_the_day)
+    # schedule.every().day.at('14:51').do(set_word_of_the_day)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
