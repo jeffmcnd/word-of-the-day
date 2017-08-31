@@ -113,8 +113,22 @@ def set_word_of_the_day():
         'success': True,
     })
 
+@app.route('/recent', methods=['GET'])
+def recent_words_of_the_day():
+    db = get_db()
+    cur = db.execute("select * from words where date is not null order by date desc limit 7")
+    words = cur.fetchall()
+
+    response = {
+        'words': []
+    }
+
+    for w in words:
+        response['words'].append({'text': w['text'], 'date': w['date']})
+
+    return jsonify(response)
+
 # TODO: create endpoint for date ranges
-# TODO: create endpoint for recent words (last seven days)
 
 if __name__ == "__main__":
     app.run()
