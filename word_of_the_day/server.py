@@ -82,10 +82,13 @@ def word_for_date(date):
         'date': word['date'],
     }
 
+def word_for_today():
+    now = datetime.datetime.now().strftime('%Y-%m-%d')
+    return word_for_date(now)
+
 @app.route('/', methods=['GET'])
 def word_of_the_day():
-    now = datetime.datetime.now().strftime('%Y-%m-%d')
-    return jsonify(word_for_day(now))
+    return jsonify(word_for_today())
 
 @app.route('/<date>', methods=['GET'])
 def word_from_date(date):
@@ -93,7 +96,7 @@ def word_from_date(date):
 
 @app.route('/update', methods=['GET'])
 def set_word_of_the_day():
-    response = word_of_the_day()
+    response = word_for_today()
 
     if not response.get('error'):
         return jsonify({
@@ -107,7 +110,7 @@ def set_word_of_the_day():
     db.execute("update words set date='" + now + "' where id=" + str(word['id']))
     db.commit()
     return jsonify({
-        'success': true,
+        'success': True,
     })
 
 # TODO: create endpoint for date ranges
