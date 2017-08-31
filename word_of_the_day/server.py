@@ -118,12 +118,12 @@ def set_word_of_the_day():
         'success': True,
     })
 
-@app.route('/recent', methods=['GET'])
-def recent_words_of_the_day():
+def recent_words(page=0):
     db = get_db()
     cur = db.execute(
         "select * from words " \
-        "where date is not null order by date desc limit 7")
+        "where date is not null order by date desc limit 10 " \
+        "offset " + str(page * 10))
     words = cur.fetchall()
 
     response = {
@@ -133,7 +133,20 @@ def recent_words_of_the_day():
     for w in words:
         response['words'].append({'text': w['text'], 'date': w['date']})
 
-    return jsonify(response)
+    return response
+
+@app.route('/recent', methods=['GET'])
+def recent_words_of_the_day():
+    return jsonify(recent_words())
+
+@app.route('/recent/<page>', methods=['GET'])
+def recent_words_by_page(page=0):
+    if not page.isdigit() or not page > 0:
+        return jsonify({
+            'error': 'Page number must be a valid, positive integer.'
+        })
+
+    return jsonify(recent_words(page))
 
 @app.route('/from/<from_date>/to/<to_date>', methods=['GET'])
 def get_words_in_range(from_date, to_date):
