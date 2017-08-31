@@ -51,7 +51,8 @@ def load_db_command():
     f = open('words_stripped.txt', 'r')
     lines = f.readlines()
     for line in lines:
-        db.execute("insert into words ('text') values ('" + line.rstrip("\n") + "')")
+        db.execute("insert into words ('text') values ('" \
+        + line.rstrip("\n") + "')")
     db.commit()
     print('Loaded values into datbase.')
 
@@ -69,7 +70,9 @@ def word_for_date(date):
         }
 
     db = get_db()
-    cur = db.execute("select * from words where date is '" + date + "' order by random() limit 1")
+    cur = db.execute(
+        "select * from words where date is '" + date + \
+        "' order by random() limit 1")
     word = cur.fetchone()
 
     if not word:
@@ -104,10 +107,12 @@ def set_word_of_the_day():
         })
 
     db = get_db()
-    cur = db.execute("select * from words where date is null order by random() limit 1")
+    cur = db.execute(
+        "select * from words where date is null order by random() limit 1")
     word = cur.fetchone()
     now = datetime.datetime.now().strftime('%Y-%m-%d')
-    db.execute("update words set date='" + now + "' where id=" + str(word['id']))
+    db.execute(
+        "update words set date='" + now + "' where id=" + str(word['id']))
     db.commit()
     return jsonify({
         'success': True,
@@ -116,7 +121,9 @@ def set_word_of_the_day():
 @app.route('/recent', methods=['GET'])
 def recent_words_of_the_day():
     db = get_db()
-    cur = db.execute("select * from words where date is not null order by date desc limit 7")
+    cur = db.execute(
+        "select * from words " \
+        "where date is not null order by date desc limit 7")
     words = cur.fetchall()
 
     response = {
@@ -128,7 +135,34 @@ def recent_words_of_the_day():
 
     return jsonify(response)
 
-# TODO: create endpoint for date ranges
+@app.route('/from/<from_date>/to/<to_date>', methods=['GET'])
+def get_words_in_range(from_date, to_date):
+    if not validate_date(from_date) or not validate_date(to_date):
+        return jsonify({
+            'error': 'One or both of the dates provided are invalid. ' \
+            'Must be YYYY-MM-DD.'
+        })
+
+    if from_date > to_date:
+        return jsonify({
+            'error': 'From date must occur before to date.'
+        })
+
+    db = get_db()
+    cur = db.execute(
+        "select * from words \
+            where date is not null and date between '" +
+            from_date + "' and '" + to_date + "' order by date desc")
+    words = cur.fetchall()
+
+    response = {
+        'words': []
+    }
+
+    for w in words:
+        response['words'].append({'text': w['text'], 'date': w['date']})
+
+    return jsonify(response)
 
 if __name__ == "__main__":
     app.run()
